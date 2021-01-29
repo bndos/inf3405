@@ -1,12 +1,17 @@
 package tp1;
 
 import java.io.DataInputStream;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Client {
     private static Socket socket;
+    private static final int TIMEOUT = 2000;
 
     public static void main(String[] args) throws Exception {
         InputParser inputParser = new InputParser();
@@ -27,7 +32,16 @@ public class Client {
             return;
         }
 
-        socket = new Socket(serverAddress, port);
+        socket = new Socket();
+        try  {
+            socket.connect(new InetSocketAddress(serverAddress, port), TIMEOUT);
+        } catch (SocketTimeoutException e) {
+            System.out.println("Couldn't reach the server");
+            return;
+        } catch (ConnectException e) {
+            System.out.println("Connexion refused");
+            return;
+        }
 
         System.out.format("The server is running %s:%d%n", serverAddress, port);
 
@@ -40,39 +54,28 @@ public class Client {
     }
 
     public static class InputParser {
+        private static final Pattern IPV4_PATTERN =
+            Pattern.compile("^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+                            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+                            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\."
+                            + "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+        private static final Pattern PORT_PATTERN = Pattern.compile("^(50[0-5][0-9])$");
+
         private Scanner scanner;
 
         public InputParser() {
             scanner = new Scanner(System.in);
         }
 
-        private int parseInt(String s, int minValue, int maxValue, String error) throws Exception {
-            int val;
-            try {
-                val = Integer.parseInt(s);
-            } catch (NumberFormatException e) {
-                throw new Exception(error);
-            }
-
-            if (val < minValue || val > maxValue)
-                throw new Exception(error);
-
-            return val;
-        }
-
         public String getIP() throws Exception {
             System.out.print("Server address: ");
 
-            String ip = scanner.next();
-            String[] bytes = ip.split("\\.", -1);
-            String error = "IP address must be in the format '0-255.0-255.0-255.0-255'";
+            String ip       = scanner.next();
+            String error    = "IP address must be in the format '0-255.0-255.0-255.0-255'";
+            Matcher matcher = IPV4_PATTERN.matcher(ip);
 
-            if (bytes.length != 4)
+            if (!matcher.matches())
                 throw new Exception(error);
-
-            for (String value : bytes) {
-                parseInt(value, 0, 255, error);
-            }
 
             return ip;
         }
@@ -80,10 +83,14 @@ public class Client {
         public int getPort() throws Exception {
             System.out.print("Server port: ");
 
-            String error = "The port should be a number between 5000 and 5050";
-            int port = parseInt(scanner.next(), 5000, 5050, error);
+            String error    = "The port should be a number between 5000 and 5050";
+            String port     = scanner.next();
+            Matcher matcher = PORT_PATTERN.matcher(port);
 
-            return port;
+            if (!matcher.matches())
+                throw new Exception(error);
+
+            return Integer.parseInt(port);
         }
     }
 }
