@@ -1,6 +1,5 @@
 package tp1;
 
-import java.io.DataInputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,43 +13,48 @@ public class Client {
     private static final int TIMEOUT = 2000;
 
     public static void main(String[] args) throws Exception {
-        InputParser inputParser = new InputParser();
-        String serverAddress;
-        int port;
-
         try {
-            serverAddress = inputParser.getIP();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return;
-        }
-
-        try {
-            port = inputParser.getPort();
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return;
-        }
-
-        socket = new Socket();
-        try  {
-            socket.connect(new InetSocketAddress(serverAddress, port), TIMEOUT);
+            connect();
         } catch (SocketTimeoutException e) {
             System.out.println("Couldn't reach the server");
             return;
         } catch (ConnectException e) {
             System.out.println("Connexion refused");
             return;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return;
         }
 
-        System.out.format("The server is running %s:%d%n", serverAddress, port);
+        Shell shell;
 
-        DataInputStream in = new DataInputStream(socket.getInputStream());
+        try {
+            shell = new Shell(socket);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return;
+        }
 
-        String helloMessageFromServer = in.readUTF();
-        System.out.println(helloMessageFromServer);
+        shell.run();
 
         socket.close();
+    }
+
+    private static void connect() throws Exception, SocketTimeoutException, ConnectException {
+        InputParser inputParser = new InputParser();
+        String serverAddress;
+        int port;
+
+        // serverAddress = inputParser.getIP();
+        // port          = inputParser.getPort();
+
+        serverAddress = "127.0.0.1";
+        port          = 5000;
+
+        socket = new Socket();
+        socket.connect(new InetSocketAddress(serverAddress, port), TIMEOUT);
+
+        System.out.format("The server is running %s:%d%n", serverAddress, port);
     }
 
     public static class InputParser {
@@ -64,13 +68,13 @@ public class Client {
         private Scanner scanner;
 
         public InputParser() {
-            scanner = new Scanner(System.in);
+            this.scanner = new Scanner(System.in);
         }
 
         public String getIP() throws Exception {
             System.out.print("Server address: ");
 
-            String ip       = scanner.next();
+            String ip       = this.scanner.nextLine();
             String error    = "IP address must be in the format '0-255.0-255.0-255.0-255'";
             Matcher matcher = IPV4_PATTERN.matcher(ip);
 
@@ -84,7 +88,7 @@ public class Client {
             System.out.print("Server port: ");
 
             String error    = "The port should be a number between 5000 and 5050";
-            String port     = scanner.next();
+            String port     = this.scanner.nextLine();
             Matcher matcher = PORT_PATTERN.matcher(port);
 
             if (!matcher.matches())

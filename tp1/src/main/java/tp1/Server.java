@@ -46,7 +46,7 @@ public class Server {
         public void run() {
             try {
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                out.writeUTF("Hello from server - you are client #" + clientNumber);
+                out.writeUTF(socket.getRemoteSocketAddress().toString());
             } catch (IOException e) {
                 System.out.println("Error handling client #" + clientNumber + ": " + e);
             } finally {
