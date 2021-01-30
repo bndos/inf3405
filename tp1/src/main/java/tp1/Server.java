@@ -2,13 +2,11 @@ package tp1;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.function.Function;
 
 public class Server {
     private static ServerSocket listener;
@@ -38,12 +36,11 @@ public class Server {
     public static class ClientHandler extends Thread {
         private Socket socket;
         private int clientNumber;
-        File cwd;
+
 
         public ClientHandler(Socket socket, int clientNumber) {
             this.socket       = socket;
             this.clientNumber = clientNumber;
-            this.cwd          = new File(".");
             System.out.println("New connection with client#" + clientNumber + " at " + socket);
         }
 
@@ -56,7 +53,8 @@ public class Server {
                     String[] args        = in.readUTF().split("\\s+");
                     exit                 = args[0].equals("exit");
 
-                    out.writeUTF(ls.apply(args));
+                    Api api = new Api(socket);
+                    out.writeUTF(api.exec(args));
                 } catch (IOException e) {
                     System.out.println("Error handling client #" + clientNumber + ": " + e);
                     try {
@@ -75,23 +73,5 @@ public class Server {
             System.out.println("Connection with client #" + clientNumber + " closed");
         }
 
-        public Function<String[], String> ls = (args) -> {
-            String files = "";
-            for (String file : this.cwd.list()) {
-                files += file + " ";
-            }
-
-            return files;
-        };
-
-        public Function<String[], String> mkdir = (args) -> {
-            for (String dir : args) {
-                File absoluteFile = new File(cwd.getAbsoluteFile() + dir);
-                if (!absoluteFile.mkdir())
-                    return "Couldn't make dir: " + dir;
-            }
-
-            return "";
-        };
     }
 }

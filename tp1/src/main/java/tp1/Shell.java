@@ -37,22 +37,22 @@ public class Shell {
             String cmd    = args[0];
 
             if (isValid(cmd)) {
-                switch (Command.getCmd(cmd)) {
-                    case cd:
+                switch (Api.Command.getCmd(cmd)) {
+                    case CD:
                         if (validArgs(args, 2, 2))
                             exit = !exchangeMessages(input);
                         break;
-                    case ls:
+                    case LS:
                         if (validArgs(args, 1, 1))
                             exit = !exchangeMessages(input);
                         break;
-                    case mkdir:
-                    case upload:
-                    case download:
+                    case MKDIR:
+                    case UPLOAD:
+                    case DOWNLOAD:
                         if (validArgs(args, 2, Integer.MAX_VALUE))
                             exit = !exchangeMessages(input);
                         break;
-                    case exit:
+                    case EXIT:
                         if (validArgs(args, 1, 1)) {
                             exchangeMessages(input);
                             exit = true;
@@ -102,7 +102,7 @@ public class Shell {
     }
 
     private static boolean isValid(String op) {
-        return Command.getCmd(op) != null;
+        return Api.Command.getCmd(op) != null;
     }
 
     private String prompt() {
