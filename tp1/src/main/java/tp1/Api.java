@@ -1,6 +1,11 @@
 package tp1;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -9,6 +14,7 @@ import java.util.function.Function;
 
 public class Api {
     private static File cwd = new File(".");
+    private static ArrayList<Function<String[], String>> commands;
     private static Socket socket;
 
     public static enum Command {
@@ -76,19 +82,19 @@ public class Api {
     };
 
     static private Function<String[], String> download = (args) -> {
-        String files = "";
-        for (String file : cwd.list()) {
-            files += file + " ";
+        try {
+            SocketCommunication.sendFile(socket, args[1]);
+        } catch (Exception e) {
+            return "An error occured downloading file";
         }
 
-        return files;
+        return "";
     };
 
     static private Function<String[], String> exit = (args) -> {
         return "";
     };
 
-    private static ArrayList<Function<String[], String>> commands;
     public Api(Socket s) {
         socket   = s;
         commands = new ArrayList<Function<String[], String>>(

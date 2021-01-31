@@ -1,8 +1,9 @@
 package tp1;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,15 +12,10 @@ import java.util.Scanner;
 public class Shell {
     private Socket socket;
     private Scanner scanner;
-    private DataOutputStream out;
-    private DataInputStream in;
 
     public Shell(Socket s) throws Exception, IOException {
         this.socket  = s;
         this.scanner = new Scanner(System.in);
-
-        this.out = new DataOutputStream(this.socket.getOutputStream());
-        this.in  = new DataInputStream(this.socket.getInputStream());
     }
 
     public void run() throws Exception, IOException {
@@ -28,7 +24,7 @@ public class Shell {
 
         mainLoop();
     }
-
+    public final static int FILE_SIZE = 6022386;
     private void mainLoop() throws Exception, IOException {
         boolean exit = false;
         while (!exit) {
@@ -40,21 +36,35 @@ public class Shell {
                 switch (Api.Command.getCmd(cmd)) {
                     case CD:
                         if (validArgs(args, 2, 2))
-                            exit = !exchangeMessages(input);
+                            exit = !SocketCommunication.exchangeMessages(socket, input);
                         break;
                     case LS:
                         if (validArgs(args, 1, 1))
-                            exit = !exchangeMessages(input);
+                            exit = !SocketCommunication.exchangeMessages(socket, input);
                         break;
                     case MKDIR:
-                    case UPLOAD:
-                    case DOWNLOAD:
                         if (validArgs(args, 2, Integer.MAX_VALUE))
-                            exit = !exchangeMessages(input);
+                            exit = !SocketCommunication.exchangeMessages(socket, input);
+                        break;
+                    case UPLOAD:
+                        if (validArgs(args, 2, Integer.MAX_VALUE))
+                            exit = !SocketCommunication.exchangeMessages(socket, input);
+                    case DOWNLOAD:
+                        if (validArgs(args, 2, Integer.MAX_VALUE)) {
+                            exit = !SocketCommunication.sendMessage(socket, input);
+                            if (!exit) {
+                                try {
+                                    SocketCommunication.receiveFile(socket, args[1]);
+                                } catch (Exception e) {
+                                    System.out.println("error receiving file");
+                                    exit = true;
+                                }
+                            }
+                        }
                         break;
                     case EXIT:
                         if (validArgs(args, 1, 1)) {
-                            exchangeMessages(input);
+                            SocketCommunication.exchangeMessages(socket, input);
                             exit = true;
                         }
                         break;
@@ -64,19 +74,6 @@ public class Shell {
                 System.out.println("Unrecognize command: " + cmd);
             }
         }
-    }
-
-    private boolean exchangeMessages(String message) {
-        try {
-            this.out.writeUTF(message);
-            String response = this.in.readUTF();
-            if (!response.isEmpty())
-                System.out.println(response);
-        } catch (IOException e) {
-            System.out.println("Error sending message to server");
-            return false;
-        }
-        return true;
     }
 
     private static boolean validArgs(String[] args, int minArg, int maxArgs) {

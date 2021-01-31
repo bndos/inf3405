@@ -37,7 +37,6 @@ public class Server {
         private Socket socket;
         private int clientNumber;
 
-
         public ClientHandler(Socket socket, int clientNumber) {
             this.socket       = socket;
             this.clientNumber = clientNumber;
@@ -53,16 +52,13 @@ public class Server {
                     String[] args        = in.readUTF().split("\\s+");
                     exit                 = args[0].equals("exit");
 
-                    Api api = new Api(socket);
-                    out.writeUTF(api.exec(args));
-                } catch (IOException e) {
-                    System.out.println("Error handling client #" + clientNumber + ": " + e);
-                    try {
-                        socket.close();
-                    } catch (IOException ioe) {
-                        System.out.println("Couldn't close a scoket, what's gouing on?");
+                    if (!exit) {
+                        Api api = new Api(socket);
+                        out.writeUTF(api.exec(args));
                     }
-                    System.out.println("Connection with client #" + clientNumber + " closed");
+                } catch (IOException e) {
+                    exit = true;
+                    System.out.println("Error handling client #" + clientNumber + ": " + e);
                 }
             }
             try {
@@ -72,6 +68,5 @@ public class Server {
             }
             System.out.println("Connection with client #" + clientNumber + " closed");
         }
-
     }
 }
