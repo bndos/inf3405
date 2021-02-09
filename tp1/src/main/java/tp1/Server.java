@@ -45,16 +45,17 @@ public class Server {
 
         public void run() {
             boolean exit = false;
+            Api api      = new Api(socket);
             while (!exit) {
                 try {
-                    DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
-                    DataInputStream in   = new DataInputStream(this.socket.getInputStream());
-                    String[] args        = in.readUTF().split("\\s+");
-                    exit                 = args[0].equals("exit");
+                    String[] args = SocketCommunication.getMessage(socket).split("\\s+");
+                    exit          = args[0].equals("exit");
 
                     if (!exit) {
-                        Api api = new Api(socket);
-                        out.writeUTF(api.exec(args));
+                        String message = api.exec(args);
+                        if (!args[0].equals("upload") && !args[0].equals("download")) {
+                            SocketCommunication.sendMessage(socket, message);
+                        }
                     }
                 } catch (IOException e) {
                     exit = true;

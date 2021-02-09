@@ -72,20 +72,20 @@ public class Api {
     };
 
     static private Function<String[], String> upload = (args) -> {
-        for (String dir : args) {
-            File absoluteFile = new File(cwd.getAbsoluteFile() + dir);
-            if (!absoluteFile.mkdir())
-                return "Couldn't make dir: " + dir;
+        try {
+            SocketCommunication.receiveFile(socket, args[1]);
+        } catch (Exception e) {
+            return "Error receiving file";
         }
 
-        return "";
+        return "File successfully uploaded";
     };
 
     static private Function<String[], String> download = (args) -> {
         try {
             SocketCommunication.sendFile(socket, args[1]);
         } catch (Exception e) {
-            return "An error occured downloading file";
+            return e.getMessage();
         }
 
         return "";

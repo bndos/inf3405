@@ -1,9 +1,6 @@
 package tp1;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,7 +21,7 @@ public class Shell {
 
         mainLoop();
     }
-    public final static int FILE_SIZE = 6022386;
+
     private void mainLoop() throws Exception, IOException {
         boolean exit = false;
         while (!exit) {
@@ -47,24 +44,33 @@ public class Shell {
                             exit = !SocketCommunication.exchangeMessages(socket, input);
                         break;
                     case UPLOAD:
-                        if (validArgs(args, 2, Integer.MAX_VALUE))
-                            exit = !SocketCommunication.exchangeMessages(socket, input);
+                        if (validArgs(args, 2, Integer.MAX_VALUE)) {
+                            try {
+                                exit = !SocketCommunication.sendMessage(socket, input);
+                                SocketCommunication.sendFile(socket, args[1]);
+                                System.out.println("File: " + args[1] + " uploaded successfully");
+                            } catch (Exception e) {
+                                System.out.println(e.getMessage());
+                            }
+                        }
+                        break;
                     case DOWNLOAD:
                         if (validArgs(args, 2, Integer.MAX_VALUE)) {
                             exit = !SocketCommunication.sendMessage(socket, input);
                             if (!exit) {
                                 try {
                                     SocketCommunication.receiveFile(socket, args[1]);
+                                    System.out.println("File: " + args[1]
+                                                       + " downloaded successfully");
                                 } catch (Exception e) {
-                                    System.out.println("error receiving file");
-                                    exit = true;
+                                    System.out.println("Could not download file: " + args[1]);
                                 }
                             }
                         }
                         break;
                     case EXIT:
                         if (validArgs(args, 1, 1)) {
-                            SocketCommunication.exchangeMessages(socket, input);
+                            SocketCommunication.sendMessage(socket, input);
                             exit = true;
                         }
                         break;

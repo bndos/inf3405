@@ -6,13 +6,14 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SocketCommunication {
     public static boolean sendMessage(Socket socket, String message) {
@@ -26,17 +27,17 @@ public class SocketCommunication {
         return true;
     }
 
-    private static String getMessage(Socket socket) throws IOException {
+    public static String getMessage(Socket socket) throws IOException {
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        String response    = in.readUTF();
-        return response;
+        String message     = in.readUTF();
+        return message;
     }
 
     public static boolean receiveMessage(Socket socket) {
         try {
-            String response = getMessage(socket);
-            if (!response.isEmpty())
-                System.out.println(response);
+            String message = getMessage(socket);
+            if (!message.isEmpty())
+                System.out.println(message);
         } catch (IOException e) {
             System.out.println("Error receiving message");
             return false;
@@ -51,42 +52,53 @@ public class SocketCommunication {
 
     public static void sendFile(Socket socket, String filePath)
         throws IOException, NoSuchFileException {
-        File file               = new File(filePath);
-        byte[] data             = new byte[(int) file.length()];
-        FileInputStream fis     = new FileInputStream(file);
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        OutputStream out        = socket.getOutputStream();
+        FileInputStream fis     = null;
+        BufferedInputStream bis = null;
+        OutputStream out        = null;
+        try {
+            Path path   = Paths.get(filePath);
+            File file   = new File(path.toAbsolutePath().normalize().toString());
+            byte[] data = new byte[(int) file.length()];
+            fis         = new FileInputStream(file);
+            bis         = new BufferedInputStream(fis);
+            out         = socket.getOutputStream();
 
-        sendMessage(socket, "" + file.length());
+            sendMessage(socket, "" + file.length());
 
-        bis.read(data, 0, data.length);
-        out.write(data, 0, data.length);
-        out.flush();
-        System.out.println("Done.");
-
-        if (bis != null)
-            bis.close();
-        if (out != null)
-            bis.close();
+            bis.read(data, 0, data.length);
+            out.write(data, 0, data.length);
+            out.flush();
+        } catch (Exception e) {
+            SocketCommunication.sendMessage(socket, ""); // Unlocks receiver
+            throw e;
+        } finally {
+            if (bis != null)
+                bis.close();
+            if (out != null)
+                bis.close();
+        }
     }
 
     public static void receiveFile(Socket socket, String filePath) throws IOException {
-        int nbytes               = Integer.parseInt(getMessage(socket));
-        byte[] mybytearray       = new byte[nbytes];
-        InputStream is           = socket.getInputStream();
-        FileOutputStream fos     = new FileOutputStream("test.xml");
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
-        int bytesRead            = is.read(mybytearray, 0, mybytearray.length);
+        FileOutputStream fos     = null;
+        BufferedOutputStream bos = null;
+        try {
+            int nbytes         = Integer.parseInt(getMessage(socket));
+            byte[] mybytearray = new byte[nbytes];
+            InputStream is     = socket.getInputStream();
+            fos                = new FileOutputStream("test.xml");
+            bos                = new BufferedOutputStream(fos);
+            int bytesRead      = is.read(mybytearray, 0, mybytearray.length);
 
-        bos.write(mybytearray, 0, bytesRead);
-        bos.flush();
-        System.out.println("File " + filePath + " downloaded (" + bytesRead + " bytes read)");
-
-        if (fos != null)
-            fos.close();
-        if (bos != null)
-            bos.close();
-
-        SocketCommunication.receiveMessage(socket);
+            bos.write(mybytearray, 0, bytesRead);
+            bos.flush();
+        } catch (Exception e) {
+            throw e;
+        } finally {
+            if (fos != null)
+                fos.close();
+            if (bos != null)
+                bos.close();
+        }
     }
 }
