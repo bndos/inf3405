@@ -33,7 +33,7 @@ public class Client {
 		return (port >= 5000 && port <= 5050);
 	}
 	
-	// Initialize l'addresse ip
+	// Initialise l'addresse ip
     public String initializeIp() throws IOException{
         System.out.println("Entrez l'addresse IP:");
   	    String serverAddress = reader.readLine();
@@ -46,7 +46,7 @@ public class Client {
         return serverAddress;
     }
     
-	// Initialize le port d'ecoute
+	// Initialise le port d'ecoute
     public int initializePort() throws NumberFormatException, IOException{
         System.out.println("Entrez le port d'ecoute :");
         int port = Integer.parseInt(reader.readLine());
