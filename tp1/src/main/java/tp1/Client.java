@@ -1,6 +1,7 @@
 package tp1;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -29,6 +30,8 @@ public class Client
        String helloMessageFromServer = in.readUTF();
        System.out.println(helloMessageFromServer);
 
+		while(commands());
+
        // Fermeture de la connexion avec le serveur
        socket.close();
     }
@@ -56,7 +59,7 @@ public class Client
             validInput = false;
             System.out.println("Please enter a valid input! (eg. 127.0.0.1:5001)");
         }
-    
+
         return(validInput);
 
     }
@@ -116,5 +119,31 @@ public class Client
 
         return true;
     }
-}
 
+	private static Boolean commands() throws Exception{
+		String cmd = clientInput.nextLine();
+		String[] input = cmd.split(" ", 2);
+		
+		if(input[0] == "exit") {
+			System.out.println("quitting...");
+			return false;
+		}
+
+		DataOutputStream out = new DataOutputStream(socket.getOutputStream());	
+		out.writeUTF(cmd);
+		while(serverAnswer());
+
+		return true;
+	}
+
+	private static Boolean serverAnswer() throws Exception{
+		DataInputStream in = new DataInputStream(socket.getInputStream());			
+		
+		while(in.available() > 0) {
+			String serverAnswer = in.readUTF();
+			System.out.println(serverAnswer);
+		}
+		return false;
+	}
+		
+}

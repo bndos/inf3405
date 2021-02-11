@@ -40,7 +40,7 @@ public class ClientHandler extends Thread {
 
         }
         catch (Exception e) {
-            System.out.println("Error handling clinet#" + clientNumber + ": " + e);
+            System.out.println("Error handling client#1" + clientNumber + ": " + e);
         }
         finally {
             try {
@@ -67,7 +67,7 @@ public class ClientHandler extends Thread {
 		String[] input = cmd.split(" ", 2);	
 
         String command = input[0];
-        System.out.println("[" + socket.getInetAddress() + ":" + socket.getPort() + " - " + getDateTime() + "]: " + command);
+        System.out.println("[" + socket.getInetAddress() + ":" + socket.getPort() + " - " + getDateTime() + "]: " + cmd);
 
         switch (command) {
             case "ls":
@@ -77,6 +77,7 @@ public class ClientHandler extends Thread {
                 cd(out, input);
                 break;
             case "mkdir":
+                mkdir(out, input);
                 break;
             case "download":
                 break;
@@ -104,6 +105,7 @@ public class ClientHandler extends Thread {
         for(int i = 0; i < directoryList.length ; i++) {
             out.writeUTF(directoryList[i]);
         }
+        out.flush();
     }
 
     private void cd(DataOutputStream out, String[] input) throws Exception {
@@ -145,16 +147,24 @@ public class ClientHandler extends Thread {
 
     }
 
-    private void mkdir() {
-
+    private void mkdir(DataOutputStream out, String[] input) throws Exception{
+        String directoryName = input[1];
+		Path newFolderPath = Paths.get(currentDirectory.toString(), directoryName);
+		if(Files.notExists(newFolderPath)) {
+            Files.createDirectory(newFolderPath);
+            out.writeUTF(currentDirectory + "was succesfully created");
+		}
+		else {
+            out.writeUTF(currentDirectory + " already exist !");
+		}
     }
 
     private void download() {
-
+        // TODO
     }
 
     private void upload() {
-        
+        // TODO
     }
 
 }
