@@ -1,11 +1,6 @@
 package tp1;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -73,7 +68,8 @@ public class Api {
 
     static private Function<String[], String> upload = (args) -> {
         try {
-            SocketCommunication.receiveFile(socket, args[1]);
+            SocketCommunication.receiveFile(
+                socket, Paths.get(cwd.getAbsolutePath()).normalize().toString(), args[1]);
         } catch (Exception e) {
             return "Error receiving file";
         }
@@ -83,7 +79,7 @@ public class Api {
 
     static private Function<String[], String> download = (args) -> {
         try {
-            SocketCommunication.sendFile(socket, args[1]);
+            SocketCommunication.sendFile(socket, cwd.getAbsolutePath(), args[1]);
         } catch (Exception e) {
             return e.getMessage();
         }

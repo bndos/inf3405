@@ -47,7 +47,7 @@ public class Shell {
                         if (validArgs(args, 2, Integer.MAX_VALUE)) {
                             try {
                                 exit = !SocketCommunication.sendMessage(socket, input);
-                                SocketCommunication.sendFile(socket, args[1]);
+                                SocketCommunication.sendFile(socket, ".", args[1]);
                                 System.out.println("File: " + args[1] + " uploaded successfully");
                             } catch (Exception e) {
                                 System.out.println(e.getMessage());
@@ -59,7 +59,7 @@ public class Shell {
                             exit = !SocketCommunication.sendMessage(socket, input);
                             if (!exit) {
                                 try {
-                                    SocketCommunication.receiveFile(socket, args[1]);
+                                    SocketCommunication.receiveFile(socket, ".", args[1]);
                                     System.out.println("File: " + args[1]
                                                        + " downloaded successfully");
                                 } catch (Exception e) {

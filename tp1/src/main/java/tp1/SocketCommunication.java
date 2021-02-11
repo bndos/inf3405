@@ -50,14 +50,13 @@ public class SocketCommunication {
         return success;
     }
 
-    public static void sendFile(Socket socket, String filePath)
+    public static void sendFile(Socket socket, String currentPath, String fileName)
         throws IOException, NoSuchFileException {
         FileInputStream fis     = null;
         BufferedInputStream bis = null;
         OutputStream out        = null;
         try {
-            Path path   = Paths.get(filePath);
-            File file   = new File(path.toAbsolutePath().normalize().toString());
+            File file   = new File(currentPath + "/" + fileName);
             byte[] data = new byte[(int) file.length()];
             fis         = new FileInputStream(file);
             bis         = new BufferedInputStream(fis);
@@ -79,18 +78,27 @@ public class SocketCommunication {
         }
     }
 
-    public static void receiveFile(Socket socket, String filePath) throws IOException {
+    public static void receiveFile(Socket socket, String currentPath, String fileName)
+        throws IOException {
         FileOutputStream fos     = null;
         BufferedOutputStream bos = null;
         try {
-            int nbytes         = Integer.parseInt(getMessage(socket));
-            byte[] mybytearray = new byte[nbytes];
-            InputStream is     = socket.getInputStream();
-            fos                = new FileOutputStream("test.xml");
-            bos                = new BufferedOutputStream(fos);
-            int bytesRead      = is.read(mybytearray, 0, mybytearray.length);
+            int messageSize = Integer.parseInt(getMessage(socket));
+            byte[] buffer   = new byte[messageSize];
+            InputStream is  = socket.getInputStream();
+            fos             = new FileOutputStream(currentPath + "/test.jpg");
+            bos             = new BufferedOutputStream(fos);
 
-            bos.write(mybytearray, 0, bytesRead);
+            int totalRead = 0;
+            while (totalRead < messageSize) {
+                int bytesRead = is.read(buffer, totalRead, messageSize - totalRead);
+                if (bytesRead < 0) {
+                    throw new IOException("Data stream ended prematurely");
+                }
+                totalRead += bytesRead;
+            }
+
+            bos.write(buffer, 0, totalRead);
             bos.flush();
         } catch (Exception e) {
             throw e;
