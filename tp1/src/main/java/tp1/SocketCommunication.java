@@ -56,7 +56,7 @@ public class SocketCommunication {
         BufferedInputStream bis = null;
         OutputStream out        = null;
         try {
-            File file   = new File(currentPath + "/" + fileName);
+            File file   = new File(joinPaths(currentPath, fileName));
             byte[] data = new byte[(int) file.length()];
             fis         = new FileInputStream(file);
             bis         = new BufferedInputStream(fis);
@@ -78,6 +78,16 @@ public class SocketCommunication {
         }
     }
 
+    private static String getFileName(String pathName) {
+        Path path = Paths.get(pathName);
+        return path.getFileName().toString();
+    }
+
+    private static String joinPaths(String currentDir, String pathName) {
+        Path path = Paths.get(pathName);
+        return path.isAbsolute() ? pathName : currentDir + "/" + pathName;
+    }
+
     public static void receiveFile(Socket socket, String currentPath, String fileName)
         throws IOException {
         FileOutputStream fos     = null;
@@ -86,7 +96,7 @@ public class SocketCommunication {
             int messageSize = Integer.parseInt(getMessage(socket));
             byte[] buffer   = new byte[messageSize];
             InputStream is  = socket.getInputStream();
-            fos             = new FileOutputStream(currentPath + "/test.jpg");
+            fos             = new FileOutputStream(joinPaths(currentPath, getFileName(fileName)));
             bos             = new BufferedOutputStream(fos);
 
             int totalRead = 0;
