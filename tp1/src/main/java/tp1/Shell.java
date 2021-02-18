@@ -77,7 +77,8 @@ public class Shell {
                 }
 
             } else {
-                System.out.println("Unrecognize command: " + cmd);
+                if(!cmd.isEmpty())
+                    System.out.println("Unrecognize command: " + cmd);
             }
         }
     }
