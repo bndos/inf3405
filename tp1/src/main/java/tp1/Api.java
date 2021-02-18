@@ -8,9 +8,9 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 public class Api {
-    private static File cwd = new File(".");
-    private static ArrayList<Function<String[], String>> commands;
-    private static Socket socket;
+    private File cwd = new File(".");
+    private ArrayList<Function<String[], String>> commands;
+    private Socket socket;
 
     public static enum Command {
         CD,
@@ -29,7 +29,7 @@ public class Api {
         }
     }
 
-    static private Function<String[], String> cd = (args) -> {
+    private Function<String[], String> cd = (args) -> {
         if (args == null || args.length > 2 || args.length < 2)
             return "";
 
@@ -39,21 +39,21 @@ public class Api {
         if (!nextDir.isDirectory())
             return args[0] + ": Not a directory: " + args[1];
 
-        cwd = nextDir;
+        this.cwd = nextDir;
 
         return "";
     };
 
-    static private Function<String[], String> ls = (args) -> {
+    private Function<String[], String> ls = (args) -> {
         String files = "";
-        for (String file : cwd.list()) {
+        for (String file : this.cwd.list()) {
             files += file + " ";
         }
 
         return files;
     };
 
-    static private Function<String[], String> mkdir = (args) -> {
+    private Function<String[], String> mkdir = (args) -> {
         int i = 0;
         for (String dir : args) {
             if (i++ != 0) {
@@ -66,10 +66,10 @@ public class Api {
         return "";
     };
 
-    static private Function<String[], String> upload = (args) -> {
+    private Function<String[], String> upload = (args) -> {
         try {
             SocketCommunication.receiveFile(
-                socket, Paths.get(cwd.getAbsolutePath()).normalize().toString(), args[1]);
+                this.socket, Paths.get(this.cwd.getAbsolutePath()).normalize().toString(), args[1]);
         } catch (Exception e) {
             return "Error receiving file";
         }
@@ -77,9 +77,9 @@ public class Api {
         return "File successfully uploaded";
     };
 
-    static private Function<String[], String> download = (args) -> {
+    private Function<String[], String> download = (args) -> {
         try {
-            SocketCommunication.sendFile(socket, cwd.getAbsolutePath(), args[1]);
+            SocketCommunication.sendFile(this.socket, this.cwd.getAbsolutePath(), args[1]);
         } catch (Exception e) {
             return e.getMessage();
         }
@@ -87,12 +87,12 @@ public class Api {
         return "";
     };
 
-    static private Function<String[], String> exit = (args) -> {
+    private Function<String[], String> exit = (args) -> {
         return "";
     };
 
     public Api(Socket s) {
-        socket   = s;
+        this.socket   = s;
         commands = new ArrayList<Function<String[], String>>(
             Arrays.asList(cd, ls, mkdir, upload, download, exit));
     }
@@ -102,6 +102,6 @@ public class Api {
             return "";
 
         int commandIndex = Command.getCmd(args[0]).ordinal();
-        return commands.get(commandIndex).apply(args);
+        return this.commands.get(commandIndex).apply(args);
     }
 }
