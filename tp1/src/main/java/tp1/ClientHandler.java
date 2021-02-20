@@ -1,12 +1,12 @@
 package tp1;
 
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 import java.nio.file.*;
 import java.text.SimpleDateFormat;  
 import java.util.Date;  
@@ -80,13 +80,26 @@ public class ClientHandler extends Thread {
                 mkdir(out, input);
                 break;
             case "download":
+                try {
+                    if(fileExist(out, input[1])) {
+                        download(out, input[1]);
+                    }
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case "upload":
+                try{
+                     upload(in, out, input[1]);
+                } catch (IOException e) {
+                   e.printStackTrace();
+                }
                 break;
             case "exit":
                 return false;
             default:
                 out.writeUTF("Something is wrong with the command..");
+                out.writeUTF("end");
                 break;
         }
         return true;
@@ -98,14 +111,16 @@ public class ClientHandler extends Thread {
         // check if there are files
         if(directoryList == null) {
             out.writeUTF("No files found.");
+            out.writeUTF("end");
             return;
         }
 
-        // test for types here? (folder or files)
         for(int i = 0; i < directoryList.length ; i++) {
-            out.writeUTF(directoryList[i]);
+            Path currentPath = Paths.get(currentDirectory.toString() + "\\" + directoryList[i]);
+            String directoryType = (Files.isRegularFile(currentPath))? "[File] " : "[Folder] ";
+            out.writeUTF(directoryType + directoryList[i]);
         }
-        out.flush();
+        out.writeUTF("end");
     }
 
     private void cd(DataOutputStream out, String[] input) throws Exception {
@@ -113,38 +128,43 @@ public class ClientHandler extends Thread {
         
         if(input.length != 2) {
             out.writeUTF("No directory or action was listed");
+            out.writeUTF("end");
             return;
         }
 
         String directory = input[1];
-        if(directory == ".") {
+        if(directory.equals(".")) {
+            out.writeUTF("end");
             return;
-        } else if(directory == "..") {
+        } else if(directory.equals("..")) {
+
             Path parentDirectory = currentDirectory.getParent();
             if(parentDirectory != null) {
-                nextDirectory = parentDirectory.toString();
+                nextDirectory = currentDirectory.getParent().toString();
             }
+
         } else {
             String[] currentDirectoryList = currentDirectory.toFile().list();
 
             for(int i=0; i< currentDirectoryList.length; i++) {
-                if(currentDirectoryList[i] == nextDirectory) {
+                if(currentDirectoryList[i].equals(input[1])) {
                     nextDirectory += "\\" + currentDirectoryList[i];
+                    
                 } 
             }
 
             // if no next directory was found
-			if(nextDirectory == currentDirectory.toString())
+			if(nextDirectory.equals(currentDirectory.toString()))
 			{
 				out.writeUTF("The directory " + directory + " does not exist.");
+                out.writeUTF("end");
 				return;
 			}
-			
-			// that path is now the current path
-			currentDirectory = Paths.get(nextDirectory);
-			out.writeUTF("Current Directory : " + nextDirectory.toString());
         } 
-
+        // that path is now the current path
+        currentDirectory = Paths.get(nextDirectory);
+        out.writeUTF("Current Directory : " + nextDirectory.toString());
+        out.writeUTF("end");
     }
 
     private void mkdir(DataOutputStream out, String[] input) throws Exception{
@@ -152,19 +172,61 @@ public class ClientHandler extends Thread {
 		Path newFolderPath = Paths.get(currentDirectory.toString(), directoryName);
 		if(Files.notExists(newFolderPath)) {
             Files.createDirectory(newFolderPath);
-            out.writeUTF(currentDirectory + "was succesfully created");
+            out.writeUTF(directoryName + " was succesfully created");
+            out.writeUTF("end");
 		}
 		else {
             out.writeUTF(currentDirectory + " already exist !");
+            out.writeUTF("end");
 		}
     }
 
-    private void download() {
-        // TODO
+    private void download(DataOutputStream out, String name) throws IOException {
+        Path directory = Paths.get(currentDirectory.toString() + "\\" + name);
+        File file = new File(directory.toString());
+        FileInputStream fileInput = new FileInputStream(directory.toString());
+        
+        if(file.exists() && file.isFile()) {
+            byte[] buffer = new byte[4096];
+    		int read;
+    		out.writeLong(file.length());
+    		while ((read = fileInput.read(buffer)) > 0) {
+    			out.write(buffer, 0, read);
+    		}
+    		fileInput.close();
+    		out.writeUTF("The file " + name + " was successfully downloaded");
+            out.writeUTF("end");
+
+        } else {
+            out.writeUTF("Error: unable to download " + name);
+            out.writeUTF("end");
+        }
     }
 
-    private void upload() {
-        // TODO
+    private void upload(DataInputStream in, DataOutputStream out, String name) throws IOException{
+        FileOutputStream fileOutput = new FileOutputStream(name);
+        byte[] buffer = new byte[4096];
+        long fileSize = in.readLong();
+        int read = 0;
+        while(fileSize > 0 && (read = in.read(buffer)) > 0) {
+            fileOutput.write(buffer, 0, read);
+            fileSize -= read;
+        }
+        fileOutput.close();
+
+        out.writeUTF("Sucessfully uploaded " + name);
+        out.writeUTF("end");
+    }
+
+    private boolean fileExist(DataOutputStream out, String name) throws Exception {
+        File file = currentDirectory.resolve(name).toFile();
+        if (!(file.isFile())){
+            out.writeUTF("This file does not exist.");
+            return false;
+        } else {
+            out.writeUTF("Downloading...");
+            return true;
+        }
     }
 
 }

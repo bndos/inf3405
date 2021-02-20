@@ -1,10 +1,8 @@
 package tp1;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
+
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Scanner;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,7 +14,7 @@ public class Server
     private static String serverIP = "";
     private static int serverPort = 0;
     private static Scanner clientInput = new Scanner(System.in); // Creation du Scanner pour avoir le user input
-    private static Path currentDirectory = Paths.get("C:/");
+    private static Path currentDirectory = Paths.get(System.getProperty("user.home") + "\\Desktop\\");
 
     /* Application Serveur*/
     public static void main( String[] args ) throws Exception { 

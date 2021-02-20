@@ -2,6 +2,9 @@ package tp1;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -82,7 +85,6 @@ public class Client
                 return false;
             }
 
-            // Verifier si respecte [0, 255]
             if(octet < 0 || octet > 255) {
                 System.out.println("Please enter an IP address inside bounderies! (XX.XX.XX.XX:YYYY where XX = [0, 255])");
                 return false;
@@ -98,52 +100,107 @@ public class Client
     private static Boolean validPort(String[] inputArray) {
         String portInput = inputArray[4];
             
-            int port = 0;
-            
-            // Verifier si ce n'est pas des lettres
-            try {
-                port = Integer.parseInt(portInput);
-            }
-            catch(NumberFormatException e) {
-                System.out.println("Please enter a valid port number! (no letters)");
-                return false;
-            }
+        int port = 0;
+        
+        // Verifier si ce n'est pas des lettres
+        try {
+            port = Integer.parseInt(portInput);
+        }
+        catch(NumberFormatException e) {
+            System.out.println("Please enter a valid port number! (no letters)");
+            return false;
+        }
 
-            // Verifier si respecte [0, 255]
-            if(port < 5000 || port > 5050) {
-                System.out.println("Please enter a port number inside bounderies! (XX.XX.XX.XX:YYYY where YYYY = [5000, 5050])");
-                return false;
-            }
-            
-            clientPort = port;
+        // Verifier si respecte [0, 255]
+        if(port < 5000 || port > 5050) {
+            System.out.println("Please enter a port number inside bounderies! (XX.XX.XX.XX:YYYY where YYYY = [5000, 5050])");
+            return false;
+        }
+        
+        clientPort = port;
 
         return true;
     }
 
 	private static Boolean commands() throws Exception{
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());	
+        DataInputStream in = new DataInputStream(socket.getInputStream());	
+
 		String cmd = clientInput.nextLine();
 		String[] input = cmd.split(" ", 2);
-		
-		if(input[0] == "exit") {
+
+        if(input[0].equals("exit")) {
 			System.out.println("quitting...");
 			return false;
-		}
-
-		DataOutputStream out = new DataOutputStream(socket.getOutputStream());	
-		out.writeUTF(cmd);
-		while(serverAnswer());
-
-		return true;
+		} else if(input[0].equals("upload")) {
+            if(fileExist(input[1])) {
+                out.writeUTF(cmd);
+                upload(out, new File(input[1]));
+            } else {
+                System.out.println("There was problem with the upload.." );
+            }
+    	    return true; 
+        } else if(input[0].equals("download")) {
+            if(fileExist(input[1])) {
+                out.writeUTF(cmd);
+                String res = in.readUTF();
+                if(res.equals("Downloading...")) {
+                    download(in, new File(input[1])); 
+                } else {
+                    System.out.println(res);
+                } 
+             } else {
+                System.out.println("There was problem with the download..");
+             }
+             return true; 
+        } else {
+            out.writeUTF(cmd);
+		    while(serverAnswer());
+		    return true;
+        }
 	}
 
 	private static Boolean serverAnswer() throws Exception{
 		DataInputStream in = new DataInputStream(socket.getInputStream());			
 		
-		while(in.available() > 0) {
+		while(true) {
 			String serverAnswer = in.readUTF();
+            if(serverAnswer.equals("end")) {break;}
 			System.out.println(serverAnswer);
 		}
 		return false;
 	}
+
+    private static boolean fileExist(String fileName){
+    	File file = new File(fileName);
+        return file.isFile();
+    }
+
+    private static void upload(DataOutputStream out, File file) throws Exception {
+    
+        FileInputStream fileInput = new FileInputStream(file.toString());
+        byte[] buffer = new byte[4096];
+        int read;
+        out.writeLong(file.length());
+        while ((read = fileInput.read(buffer)) > 0) {
+            out.write(buffer, 0, read);
+        }
+        fileInput.close();
+    }
+    
+
+    private static void download(DataInputStream in, File file) throws Exception {
+        
+        FileOutputStream fileOutput = new FileOutputStream(file.getName());
+        byte[] buffer = new byte[4096];
+        long fileSize = in.readLong();
+        int read = 0;
+
+        while(fileSize > 0 && (read = in.read(buffer)) > 0) {
+            fileOutput.write(buffer, 0, read);
+            fileSize -= read;
+        }
+        fileOutput.close();
+    }
 		
 }
