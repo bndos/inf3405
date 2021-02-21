@@ -2,8 +2,6 @@ package tp1;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class Shell {
@@ -48,9 +46,11 @@ public class Shell {
                             try {
                                 exit = !SocketCommunication.sendMessage(socket, input);
                                 SocketCommunication.sendFile(socket, ".", args[1]);
-                                System.out.println("File: " + args[1] + " uploaded successfully");
+                                System.out.println("Le fichier " + args[1]
+                                                   + " a bien ete televerse");
                             } catch (Exception e) {
-                                System.out.println(e.getMessage());
+                                System.out.println("Le fichier " + args[1]
+                                                   + " n'a pas pu etre televerse");
                             }
                         }
                         break;
@@ -60,24 +60,25 @@ public class Shell {
                             if (!exit) {
                                 try {
                                     SocketCommunication.receiveFile(socket, ".", args[1]);
-                                    System.out.println("File: " + args[1]
-                                                       + " downloaded successfully");
+                                    System.out.println("Le fichier " + args[1]
+                                                       + " a bien ete telecharge");
                                 } catch (Exception e) {
-                                    System.out.println("Could not download file: " + args[1]);
+                                    System.out.println("Le fichier " + args[1]
+                                                       + " n'a pas pu etre telecharge");
                                 }
                             }
                         }
                         break;
                     case EXIT:
                         if (validArgs(args, 1, 1)) {
-                            SocketCommunication.sendMessage(socket, input);
+                            SocketCommunication.exchangeMessages(socket, input);
                             exit = true;
                         }
                         break;
                 }
 
             } else {
-                if(!cmd.isEmpty())
+                if (!cmd.isEmpty())
                     System.out.println("Unrecognize command: " + cmd);
             }
         }
@@ -110,12 +111,7 @@ public class Shell {
     }
 
     private String prompt() {
-        LocalDateTime nowDateTime        = LocalDateTime.now();
-        DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss");
-        String formattedDateTime         = nowDateTime.format(dateTimeFormat);
-
-        System.out.print("[" + this.socket.getLocalAddress().getHostAddress() + ":"
-                         + this.socket.getLocalPort() + " - " + formattedDateTime + "]: ");
+        System.out.print("> ");
 
         this.scanner = new Scanner(System.in);
         String input = this.scanner.nextLine();

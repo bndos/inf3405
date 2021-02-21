@@ -5,6 +5,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Server {
     private static ServerSocket listener;
@@ -41,19 +43,29 @@ public class Server {
             System.out.println("New connection with client#" + clientNumber + " at " + socket);
         }
 
+        private void prompt(String cmd) {
+            LocalDateTime nowDateTime        = LocalDateTime.now();
+            DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd@HH:mm:ss");
+            String formattedDateTime         = nowDateTime.format(dateTimeFormat);
+
+            System.out.println("[" + this.socket.getLocalAddress().getHostAddress() + ":"
+                               + this.socket.getPort() + " - " + formattedDateTime + "]: " + cmd);
+        }
+
         public void run() {
             boolean exit = false;
             Api api      = new Api(socket);
             while (!exit) {
                 try {
-                    String[] args = SocketCommunication.getMessage(socket).split("\\s+");
+                    String cmd    = SocketCommunication.getMessage(socket);
+                    String[] args = cmd.split("\\s+");
                     exit          = args[0].equals("exit");
 
-                    if (!exit) {
-                        String message = api.exec(args);
-                        if (!args[0].equals("upload") && !args[0].equals("download")) {
-                            SocketCommunication.sendMessage(socket, message);
-                        }
+                    prompt(cmd);
+
+                    String message = api.exec(args);
+                    if (!args[0].equals("upload") && !args[0].equals("download")) {
+                        SocketCommunication.sendMessage(socket, message);
                     }
                 } catch (IOException e) {
                     exit = true;

@@ -2,7 +2,6 @@ package tp1;
 
 import java.io.File;
 import java.net.Socket;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -33,22 +32,23 @@ public class Api {
         if (args == null || args.length > 2 || args.length < 2)
             return "";
 
-        File nextDir = new File(Paths.get(cwd.getAbsolutePath()).normalize() + "/" + args[1]);
+        File nextDir = new File(SocketCommunication.joinPaths(cwd.getAbsolutePath(), args[1]));
         if (!nextDir.exists())
-            return args[0] + ": No such file or directory: " + args[1];
+            return args[1] + " n'existe pas";
         if (!nextDir.isDirectory())
-            return args[0] + ": Not a directory: " + args[1];
+            return args[1] + " n'est pas un repertoire";
 
         this.cwd = nextDir;
-
-        return "";
+        return "Vous etes dans le dossier "
+      + SocketCommunication.getFileName(nextDir.getAbsolutePath());
     };
 
     private Function<String[], String> ls = (args) -> {
         String files = "";
         for (String fileName : this.cwd.list()) {
             File file = new File(fileName);
-            files += file.isDirectory()? "[Folder] " + fileName + "\n" : "[File]   " + fileName + "\n";
+            files +=
+                file.isDirectory() ? "[Folder] " + fileName + "\n" : "[File]   " + fileName + "\n";
         }
 
         files = files.substring(0, files.length() - 1);
@@ -70,8 +70,7 @@ public class Api {
 
     private Function<String[], String> upload = (args) -> {
         try {
-            SocketCommunication.receiveFile(
-                this.socket, Paths.get(this.cwd.getAbsolutePath()).normalize().toString(), args[1]);
+            SocketCommunication.receiveFile(this.socket, this.cwd.getAbsolutePath(), args[1]);
         } catch (Exception e) {
             return "Error receiving file";
         }
@@ -90,12 +89,12 @@ public class Api {
     };
 
     private Function<String[], String> exit = (args) -> {
-        return "";
+        return "Vous avez ete deconnecte avec succes";
     };
 
     public Api(Socket s) {
-        this.socket   = s;
-        commands = new ArrayList<Function<String[], String>>(
+        this.socket = s;
+        commands    = new ArrayList<Function<String[], String>>(
             Arrays.asList(cd, ls, mkdir, upload, download, exit));
     }
 

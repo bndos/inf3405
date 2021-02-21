@@ -39,7 +39,7 @@ public class SocketCommunication {
             if (!message.isEmpty())
                 System.out.println(message);
         } catch (IOException e) {
-            System.out.println("Error receiving message");
+            System.out.println("Erreure lors de la reception du message");
             return false;
         }
         return true;
@@ -78,13 +78,13 @@ public class SocketCommunication {
         }
     }
 
-    private static String getFileName(String pathName) {
-        Path path = Paths.get(pathName);
+    public static String getFileName(String pathName) {
+        Path path = Paths.get(pathName).normalize();
         return path.getFileName().toString();
     }
 
-    private static String joinPaths(String currentDir, String pathName) {
-        Path path = Paths.get(pathName);
+    public static String joinPaths(String currentDir, String pathName) {
+        Path path = Paths.get(pathName).normalize();
         return path.isAbsolute() ? pathName : currentDir + "/" + pathName;
     }
 
