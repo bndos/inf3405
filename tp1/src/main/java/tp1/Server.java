@@ -1,6 +1,7 @@
 package tp1;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -12,17 +13,17 @@ public class Server {
     private static ServerSocket listener;
 
     public static void main(String[] args) throws IOException {
-        int clientNumber     = 0;
-        String serverAddress = "localhost";
-        int serverPort       = 5000;
+        int clientNumber = 0;
 
-        listener = new ServerSocket();
-        listener.setReuseAddress(true);
-        InetAddress serverIP = InetAddress.getByName(serverAddress);
-
-        listener.bind(new InetSocketAddress(serverIP, serverPort), serverPort);
-
-        System.out.format("The server is running %s:%d%n", serverAddress, serverPort);
+        try {
+            bind();
+        } catch (BindException e) {
+            System.out.println("L'addresse n'a pas pu etre assigne");
+            return;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return;
+        }
 
         try {
             while (true) {
@@ -31,6 +32,22 @@ public class Server {
         } finally {
             listener.close();
         }
+    }
+
+    private static void bind() throws Exception, BindException {
+        String serverAddress;
+        int serverPort;
+
+        serverAddress = IpParser.getIP();
+        serverPort    = IpParser.getPort();
+
+        listener = new ServerSocket();
+        listener.setReuseAddress(true);
+        InetAddress serverIP = InetAddress.getByName(serverAddress);
+
+        listener.bind(new InetSocketAddress(serverIP, serverPort), serverPort);
+
+        System.out.format("The server is running %s:%d%n", serverAddress, serverPort);
     }
 
     public static class ClientHandler extends Thread {
