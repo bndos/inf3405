@@ -46,10 +46,12 @@ public class Api {
 
     private Function<String[], String> ls = (args) -> {
         String files = "";
-        for (String file : this.cwd.list()) {
-            files += file + " ";
+        for (String fileName : this.cwd.list()) {
+            File file = new File(fileName);
+            files += file.isDirectory()? "[Folder] " + fileName + "\n" : "[File]   " + fileName + "\n";
         }
 
+        files = files.substring(0, files.length() - 1);
         return files;
     };
 
