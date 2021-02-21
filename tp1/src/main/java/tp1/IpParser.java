@@ -15,10 +15,10 @@ public class IpParser {
     private static Scanner scanner = new Scanner(System.in);
 
     public static String getIP() throws Exception {
-        System.out.print("Server address: ");
+        System.out.print("Adresse ip: ");
 
         String ip       = scanner.nextLine();
-        String error    = "IP address must be in the format '0-255.0-255.0-255.0-255'";
+        String error    = "L'adresse ip devrait etre dans le format '0-255.0-255.0-255.0-255'";
         Matcher matcher = IPV4_PATTERN.matcher(ip);
 
         if (!matcher.matches())
@@ -28,9 +28,9 @@ public class IpParser {
     }
 
     public static int getPort() throws Exception {
-        System.out.print("Server port: ");
+        System.out.print("Port: ");
 
-        String error    = "The port should be a number between 5000 and 5050";
+        String error    = "Le port devrait etre entre 5000 et 5050";
         String port     = scanner.nextLine();
         Matcher matcher = PORT_PATTERN.matcher(port);
 

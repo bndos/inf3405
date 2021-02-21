@@ -51,7 +51,7 @@ public class Api {
                 file.isDirectory() ? "[Folder] " + fileName + "\n" : "[File]   " + fileName + "\n";
         }
 
-        files = files.substring(0, files.length() - 1);
+        files = files.substring(0, Math.max(files.length() - 1, 0));
         return files;
     };
 
@@ -59,23 +59,23 @@ public class Api {
         int i = 0;
         for (String dir : args) {
             if (i++ != 0) {
-                File dirFile = new File(dir);
+                File dirFile = new File(SocketCommunication.joinPaths(this.cwd.getAbsolutePath(), dir));
                 if (!dirFile.mkdir())
-                    return "Couldn't make dir: " + dir;
+                    return "Le dossier " + dir + " n'a pas pu etre cree";
             }
         }
 
-        return "";
+        return "Le dossier " + args[1] + " a ete cree.";
     };
 
     private Function<String[], String> upload = (args) -> {
         try {
             SocketCommunication.receiveFile(this.socket, this.cwd.getAbsolutePath(), args[1]);
         } catch (Exception e) {
-            return "Error receiving file";
+            return "Erreure lors de la reception du fichier";
         }
 
-        return "File successfully uploaded";
+        return "";
     };
 
     private Function<String[], String> download = (args) -> {
