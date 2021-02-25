@@ -70,7 +70,7 @@ public class Api {
 
     private Function<String[], String> upload = (args) -> {
         try {
-            SocketCommunication.receiveFile(this.socket, this.cwd.getAbsolutePath(), args[1]);
+            SocketCommunication.receiveFile(this.socket, this.cwd.getAbsolutePath(), args[1], false);
         } catch (Exception e) {
             return "Erreure lors de la reception du fichier";
         }
@@ -80,7 +80,7 @@ public class Api {
 
     private Function<String[], String> download = (args) -> {
         try {
-            SocketCommunication.sendFile(this.socket, this.cwd.getAbsolutePath(), args[1]);
+            SocketCommunication.sendFile(this.socket, this.cwd.getAbsolutePath(), args[1], false);
         } catch (Exception e) {
             return e.getMessage();
         }

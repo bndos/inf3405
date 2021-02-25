@@ -45,7 +45,7 @@ public class Shell {
                         if (validArgs(args, 2, Integer.MAX_VALUE)) {
                             try {
                                 exit = !SocketCommunication.sendMessage(socket, input);
-                                SocketCommunication.sendFile(socket, ".", args[1]);
+                                SocketCommunication.sendFile(socket, ".", args[1], true);
                                 System.out.println("Le fichier " + args[1]
                                                    + " a bien ete televerse");
                             } catch (Exception e) {
@@ -59,7 +59,7 @@ public class Shell {
                             exit = !SocketCommunication.sendMessage(socket, input);
                             if (!exit) {
                                 try {
-                                    SocketCommunication.receiveFile(socket, ".", args[1]);
+                                    SocketCommunication.receiveFile(socket, ".", args[1], true);
                                     System.out.println("Le fichier " + args[1]
                                                        + " a bien ete telecharge");
                                 } catch (Exception e) {

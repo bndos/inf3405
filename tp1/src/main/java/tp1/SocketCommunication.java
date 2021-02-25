@@ -50,7 +50,7 @@ public class SocketCommunication {
         return success;
     }
 
-    public static void sendFile(Socket socket, String currentPath, String fileName)
+    public static void sendFile(Socket socket, String currentPath, String fileName, boolean feedback)
         throws IOException, NoSuchFileException {
         FileInputStream fis     = null;
         BufferedInputStream bis = null;
@@ -81,7 +81,7 @@ public class SocketCommunication {
                 curLength = leftSize > freeMem - 1 ? freeMem - 1 : (int) leftSize;
                 data      = new byte[curLength];
 
-                if (100 * (fileLength - leftSize) / fileLength > percentage) {
+                if (feedback && 100 * (fileLength - leftSize) / fileLength > percentage) {
                     System.out.println((percentage = (fileLength - leftSize) * 100 / fileLength)
                                        + "%");
                 }
@@ -109,7 +109,7 @@ public class SocketCommunication {
         return path.isAbsolute() ? pathName : currentDir + "/" + pathName;
     }
 
-    public static void receiveFile(Socket socket, String currentPath, String fileName)
+    public static void receiveFile(Socket socket, String currentPath, String fileName, boolean feedback)
         throws IOException {
         FileOutputStream fos     = null;
         BufferedOutputStream bos = null;
@@ -142,7 +142,7 @@ public class SocketCommunication {
                 curSize = leftSize > freeMem - 1 ? freeMem - 1 : (int) leftSize;
                 buffer  = new byte[curSize];
 
-                if (100 * (fileSize - leftSize) / fileSize > percentage) {
+                if (feedback && 100 * (fileSize - leftSize) / fileSize > percentage) {
                     System.out.println((percentage = (fileSize - leftSize) * 100 / fileSize) + "%");
                 }
             }
