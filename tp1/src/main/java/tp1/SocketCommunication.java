@@ -56,16 +56,30 @@ public class SocketCommunication {
         BufferedInputStream bis = null;
         OutputStream out        = null;
         try {
-            File file   = new File(joinPaths(currentPath, fileName));
-            byte[] data = new byte[(int) file.length()];
-            fis         = new FileInputStream(file);
-            bis         = new BufferedInputStream(fis);
-            out         = socket.getOutputStream();
+            File file       = new File(joinPaths(currentPath, fileName));
+            long fileLength = file.length();
+            int curLength =
+                fileLength > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileLength;
+
+            byte[] data = new byte[curLength];
+
+            fis = new FileInputStream(file);
+            bis = new BufferedInputStream(fis);
+            out = socket.getOutputStream();
 
             sendMessage(socket, "" + file.length());
 
-            bis.read(data, 0, data.length);
-            out.write(data, 0, data.length);
+            while (curLength > 0) {
+                System.out.println(curLength);
+                bis.read(data, 0, curLength);
+                out.write(data, 0, curLength);
+
+                fileLength -= curLength;
+                curLength =
+                    fileLength > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileLength;
+                data = new byte[curLength];
+            }
+
             out.flush();
         } catch (Exception e) {
             SocketCommunication.sendMessage(socket, ""); // Unlocks receiver
@@ -93,22 +107,29 @@ public class SocketCommunication {
         FileOutputStream fos     = null;
         BufferedOutputStream bos = null;
         try {
-            int messageSize = Integer.parseInt(getMessage(socket));
-            byte[] buffer   = new byte[messageSize];
-            InputStream is  = socket.getInputStream();
-            fos             = new FileOutputStream(joinPaths(currentPath, getFileName(fileName)));
-            bos             = new BufferedOutputStream(fos);
+            long fileSize = Long.parseLong(getMessage(socket));
+            int curSize = fileSize > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileSize;
+            byte[] buffer  = new byte[curSize];
+            InputStream is = socket.getInputStream();
+            fos            = new FileOutputStream(joinPaths(currentPath, getFileName(fileName)));
+            bos            = new BufferedOutputStream(fos);
 
-            int totalRead = 0;
-            while (totalRead < messageSize) {
-                int bytesRead = is.read(buffer, totalRead, messageSize - totalRead);
-                if (bytesRead < 0) {
-                    throw new IOException("Data stream ended prematurely");
+            while (curSize > 0) {
+                int totalRead = 0;
+                while (totalRead < curSize) {
+                    int bytesRead = is.read(buffer, totalRead, curSize - totalRead);
+                    if (bytesRead < 0) {
+                        throw new IOException("Data stream ended prematurely");
+                    }
+                    totalRead += bytesRead;
                 }
-                totalRead += bytesRead;
-            }
 
-            bos.write(buffer, 0, totalRead);
+                bos.write(buffer, 0, totalRead);
+
+                fileSize -= curSize;
+                curSize = fileSize > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileSize;
+                buffer  = new byte[curSize];
+            }
             bos.flush();
         } catch (Exception e) {
             throw e;
