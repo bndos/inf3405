@@ -58,8 +58,10 @@ public class SocketCommunication {
         try {
             File file       = new File(joinPaths(currentPath, fileName));
             long fileLength = file.length();
-            int curLength =
-                fileLength > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileLength;
+            int freeMem     = Runtime.getRuntime().freeMemory() > Integer.MAX_VALUE
+                                ? Integer.MAX_VALUE
+                                : (int) Runtime.getRuntime().freeMemory();
+            int curLength   = fileLength > freeMem - 1 ? freeMem - 1 : (int) fileLength;
 
             byte[] data = new byte[curLength];
 
@@ -69,15 +71,20 @@ public class SocketCommunication {
 
             sendMessage(socket, "" + file.length());
 
+            long leftSize   = fileLength;
+            long percentage = 0;
             while (curLength > 0) {
-                System.out.println(curLength);
                 bis.read(data, 0, curLength);
                 out.write(data, 0, curLength);
 
-                fileLength -= curLength;
-                curLength =
-                    fileLength > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileLength;
-                data = new byte[curLength];
+                leftSize -= curLength;
+                curLength = leftSize > freeMem - 1 ? freeMem - 1 : (int) leftSize;
+                data      = new byte[curLength];
+
+                if (100 * (fileLength - leftSize) / fileLength > percentage) {
+                    System.out.println((percentage = (fileLength - leftSize) * 100 / fileLength)
+                                       + "%");
+                }
             }
 
             out.flush();
@@ -107,13 +114,18 @@ public class SocketCommunication {
         FileOutputStream fos     = null;
         BufferedOutputStream bos = null;
         try {
-            long fileSize = Long.parseLong(getMessage(socket));
-            int curSize = fileSize > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileSize;
+            long fileSize  = Long.parseLong(getMessage(socket));
+            int freeMem    = Runtime.getRuntime().freeMemory() > Integer.MAX_VALUE
+                               ? Integer.MAX_VALUE
+                               : (int) Runtime.getRuntime().freeMemory();
+            int curSize    = fileSize > freeMem - 1 ? freeMem - 1 : (int) fileSize;
             byte[] buffer  = new byte[curSize];
             InputStream is = socket.getInputStream();
             fos            = new FileOutputStream(joinPaths(currentPath, getFileName(fileName)));
             bos            = new BufferedOutputStream(fos);
 
+            long leftSize   = fileSize;
+            long percentage = 0;
             while (curSize > 0) {
                 int totalRead = 0;
                 while (totalRead < curSize) {
@@ -126,9 +138,13 @@ public class SocketCommunication {
 
                 bos.write(buffer, 0, totalRead);
 
-                fileSize -= curSize;
-                curSize = fileSize > Integer.MAX_VALUE / 2 ? Integer.MAX_VALUE / 2 : (int) fileSize;
+                leftSize -= curSize;
+                curSize = leftSize > freeMem - 1 ? freeMem - 1 : (int) leftSize;
                 buffer  = new byte[curSize];
+
+                if (100 * (fileSize - leftSize) / fileSize > percentage) {
+                    System.out.println((percentage = (fileSize - leftSize) * 100 / fileSize) + "%");
+                }
             }
             bos.flush();
         } catch (Exception e) {
